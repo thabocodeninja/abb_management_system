@@ -21,6 +21,29 @@ class User extends config {
         $result = $query->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);    
     }
+    public function getById($id){
+        $sql = $this->conn->prepare("SELECT * FROM users WHERE id = ?");
+        $sql->bind_param("i", $id);
+        $sql->execute();
+        $Query = $sql->get_result();
+        return $Query->fetch_assoc();
+    }
+
+    public function create($data){
+        $sql = $this->conn->prepare("INSERT INTO users (username, password, role) VALUES (?,?,?)");
+        $sql->bind_param("sss", $data['username'], $data['password'], $data['role']);
+        return $sql->execute();
+    }
+    public function update($id, $data){
+        $sql = $this->conn->prepare("UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?");
+        $sql->bind_param("sssi", $data['username'], $data['password'], $data['role'], $id);
+        return $sql->execute();
+    }
+    public function delete($id){
+        $sql = $this->conn->prepare("DELETE FROM users WHERE id = ?");
+        $sql->bind_param("i", $id);
+        return $sql->execute();
+    }
 }
 
 ?>
