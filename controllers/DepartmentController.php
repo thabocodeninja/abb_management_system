@@ -1,5 +1,5 @@
 <?php
-class DepartmentController extends controller {
+class DepartmentController extends Basecontroller {
 pubpic function index() {
     $this->checkRole('admin');
     $departmentModel = new Department();
