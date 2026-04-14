@@ -10,11 +10,11 @@ class WardBooking extends Config {
     }
 
     public function getById($id) {
-        $sql = $this->conn->prepare("SELECT wb.*, p.first_name, p.last_name, w.ward_number FROM 
+$sql = $this->conn->prepare("SELECT wb.*, p.first_name, p.last_name, w.ward_number FROM 
         ward_bookings wb JOIN patients p ON wb.patient_id = p.id JOIN wards w ON wb.ward_id = w.id 
         WHERE wb.id = ?");
         $sql->bind_param("i", $id);
-        $sql->execute();    
+        $sql->execute();            
         return $sql->get_result()->fetch_assoc();
     }
 
