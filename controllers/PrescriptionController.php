@@ -1,43 +1,76 @@
 <?php
 
-class Prescription extends Config {
-    public function getAllPrescription(){
-        $sql = $this->conn->query("SELECT pr.*, p.first_name, p.last_name, u.username as doctor_name FROM prescriptions pr JOIN patients p ON pr.patient_id = p.id
-        JOIN users u ON pr.doctor_id = u.id");
-        return $result->fetch_all(MYSQLI_ASSOC);
+
+require_once __DIR__. '/../models/Prescription.php';
+require_once __DIR__. '/../models/Patient.php';
+require_once __DIR__. '/../models/User.php';
+
+
+class PrescriptionController extends BaseController {
+    public function index() {
+        $this->checkRole('admin');
+        $prescriptionModel = new Prescription();
+        $prescriptions = $prescriptionModel->getAllPrescription();
+        $this->render('prescription/index', ['prescriptions' => $prescriptions])
     }
 
-    public function getById($id) {
-        $sql = $this->conn->prepare("SELECT pr.*, p.first_name, p.last_name, u.username as doctor_name FROM prescriptions pr JOIN
-        patients p ON pr.patient_id = p.id JOIN users u ON pr.doctor_id = u.id WHERE pr.id = ?");
-        $sql->bind_param("i", $id);
-        $sql->execute();
-        $query = $sql->get_result();
-        return $query->fetch_assoc();
+ 
+    public function create() {
+
+    $this->checRole('admin');
+    $patientModel = new Patient();
+    $userModel = new User();
+    $patients = $patientModel->getAllPatient();
+    $doctors = $userModel->getUsersByRole('doctor');
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $data = [
+            'patient_id' => $_POST['patient_id'],
+            'doctor_id' => $_POST['doctor_id'],
+            'prescription_date' => $_POST['prescription_date'],
+            'medication' => $_POST['medication'],
+            'dosage' => $_POST['dosage'],
+            'instructions' => $_POST['instructions']
+        ]
+        $prescriptionModel = new Prescription();
+        if ($prescriptionModel->create($data)) {
+            $this->redirect('/prescriptions');
+        }
+    }
+    $this->render('prescriptions/create', ['patients' => $patients, 'doctors' => $doctors])
     }
 
-    public function create($data) {
-     $sql = $this->conn->prepare("INSERT INTO prescriptions (patient_id, doctor_id, prescription_date, medication, dosage,
-     instructions) VALUES (?,?,?,?,?,?)");
-     $sql->bind_param("iissss", $data['patient_id'], $data['doctor_id'], $data['prescription_date'], $data['medication'],
-     $data['dosage'], $data['instructions']);
-     return $sql->execute();
-    }
-    
-    public function update($id, $data) {
-        $sql = $this->conn->prepare("UPDATE prescriptions SET patient_id ?, doctor_id = ?, prescription_date = ?,
-        medication = ?, dosage = ?, instructions = ? WHERE id = ?");
-        $sql->bind_param("iisss", $data['patient_id'], $data['doctor_id'], $data['prescription_date'],
-        $data['medication'] , $data['dosage'] ,$data['instructions'], $id)
-        return $sql->execute();
+    public function edit($id) {
+        $this->checkRole('admin');
+        $prescriptionModel = new Prescription();
+        $patientModel = new Patient();
+        $userModel = new User();
+        $prescription = $prescriptionModel->getById($id);
+        $patients = $patientModel->getAllPatient();
+        $doctors = $userModel->getUsersByRole('doctor');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = [
+                'patient_id' => $_POST['patient_id'],
+                'doctor_id' => $_POST['doctor_id'],
+                'prescription_date' => $_POST['prescription_date'],
+                'medication' => $_POST['medication'],
+                'dosage' => $_POST['dosage'],
+                'instructions' => $_POST['instructions']
+            ]
+            if ($prescriptionModel->update($id,$data)) {
+                $this->redirect('/prescriptions')
+            }
+        }
+        $this->render('prescriptions/edit' , ['prescription' => $prescription, 'patients' => $patients, 'doctors' => $doctors])
     }
 
-    public fuction delete($id) {
-        $sql = $this->conn->prepare("DELETE FROM prescriptions WHERE id = ?");
-        $sql->bind_param("i", $id);
-        return $sql->execute()
+    public function delete($id) {
+        $this->checkRole('admin');
+        $prescriptionModel = new Prescription();
+        if ($prescriptionModel->delete($id)) {
+            $this->redirect('/prescriptions')
+        }
     }
-
 }
+
 
 ?>
